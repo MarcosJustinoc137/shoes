@@ -52,8 +52,7 @@ def consultar_clientes():
             f"ID: {cliente[0]} | "
             f"Nome: {cliente[1]} | "
             f"Telefone: {cliente[2]} | "
-            f"Fabrica: {cliente[3]}"
-        )
+            f"Fabrica: {cliente[3]}")
 
     cur.close()
     conn.close()
@@ -115,8 +114,7 @@ def consultar_costuras():
         print(f"ID: {valor[0]} | " 
               f"Cliente: {valor[1]} | "
               f"Costura: {valor[2]} | "
-              f"Valor: R${valor[3]:.2f}"
-        )
+              f"Valor: R${valor[3]:.2f}")
 
     cur.close()
     conn.close()
@@ -177,8 +175,7 @@ def consultar_pedidos():
             f"Nome: {valor[1]} | " 
             f"Tipo de costura: {valor[2]} | "
             f"Data: {valor[3]} | "
-            f"Pares: {valor[4]}"
-        )
+            f"Pares: {valor[4]}")
 
     cur.close()
     conn.close()
@@ -215,10 +212,100 @@ def calcular_valores():
             f"Tipo de Costura: {valor[1]} | "
             f"Valor por par: R$ {valor[2]:2f} | "
             f"Pares: {valor[3]} | "
-            f"Total a pagar: R$ {valor[4]:2f}"
-            )
+            f"Total a pagar: R$ {valor[4]:2f}")
 
     cur.close()
     conn.close()
 
-calcular_valores()
+
+# ==========================================
+# CALCULAR VALOR MENSAL/ANUAL
+# ==========================================
+
+def relatorio_mensal():
+
+    mes = int(input("Digite o mês (1-12): "))
+    ano = int(input("Digite o ano: "))
+
+    conn = conectar()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            customer.customer_name,
+            SUM(request.amount) AS total_pares,
+            SUM(customer_seam.valor * request.amount) AS toral_a_pagar
+        FROM request
+        INNER JOIN customer_seam ON request.customer_seam_id = customer_seam.id_customer_seam
+        INNER JOIN customer ON customer_seam.customer_id = customer.id_customer
+        WHERE
+            EXTRACT(MONTH FROM request.date_request) = %s
+            AND EXTRACT(YEAR FROM request.date_request) = %s
+        GROUP BY customer.customer_name
+        ORDER BY customer.customer_name;""", (mes, ano))
+
+
+
+    relatorio = cur.fetchall()
+
+    print(f"\n===== RELATÓRIO {mes:02d}/{ano} =====\n")
+
+    for valor in relatorio:
+        print(
+            f"Cliente: {valor[0]} | "
+            f"Pares: {valor[1]} | "
+            f"Total a pagar: R$ {valor[2]:.2f}")
+
+    cur.close()
+    conn.close()
+
+
+# ==========================================
+# CALCULAR VALOR MENSAL/ANUAL
+# ==========================================
+
+
+while True:
+    print("\n===== SISTEMA DE CONTROLE DE COSTURAS =====")
+    print("1 - Cadastrar cliente")
+    print("2 - Consultar clientes")
+    print("3 - Cadastrar costura")
+    print("4 - Consultar costuras")
+    print("5 - Registrar pedido")
+    print("6 - Consultar pedidos")
+    print("7 - Calcular valores")
+    print("8 - Relatório mensal")
+    print("0 - Sair")
+
+    opcao = input("\nDigite uma opção: ")
+
+    if opcao == "1":
+        cadastrar_cliente()
+
+    elif opcao == "2":
+        consultar_clientes()
+
+    elif opcao == "3":
+        cadastrar_costura()
+
+    elif opcao == "4":
+        consultar_costuras()
+
+    elif opcao == "5":
+        registrar_pedido()
+
+    elif opcao == "6":
+        consultar_pedidos()
+
+    elif opcao == "7":
+        calcular_valores()
+
+    elif opcao == "8":
+        relatorio_mensal()
+
+    elif opcao == "0":
+        print("Sistema encerrado.")
+        break
+
+    else:
+        print("Opção inválida. Tente novamente.")
