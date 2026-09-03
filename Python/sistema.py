@@ -121,4 +121,104 @@ def consultar_costuras():
     cur.close()
     conn.close()
 
-consultar_costuras()
+
+# ==========================================
+# REGISTRAR PEDIDO
+# ==========================================
+
+def registrar_pedido():
+    costura_id = int(input("Digite o ID da costura: "))
+    quantidade = int(input("Digite a quantidade de pares: "))
+
+    conn = conectar()
+    cur = conn.cursor()
+
+    cur.execute("""
+    INSERT INTO request 
+        (customer_seam_id, amount)
+    VALUES 
+        (%s,%s);
+    """,(costura_id, quantidade))
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+    print("Pedido registrado com sucesso!")
+
+
+# ==========================================
+# CONSULTAR PEDIDOS
+# ==========================================
+
+
+def consultar_pedidos():
+    conn = conectar()
+    cur = conn.cursor()
+
+    cur.execute("""
+    SELECT 
+        request.id_request,
+        customer.customer_name,
+        customer_seam.name_seam,
+        request.date_request,
+        request.amount
+    FROM request
+    INNER JOIN customer_seam ON request.customer_seam_id = customer_seam.id_customer_seam
+    INNER JOIN customer ON customer_seam.customer_id = customer.id_customer
+    ORDER BY request.id_request;
+""")
+
+    pedidos = cur.fetchall()
+
+    for valor in pedidos:
+        print(
+            f"ID: {valor[0]} | "
+            f"Nome: {valor[1]} | " 
+            f"Tipo de costura: {valor[2]} | "
+            f"Data: {valor[3]} | "
+            f"Pares: {valor[4]}"
+        )
+
+    cur.close()
+    conn.close()
+
+
+# ==========================================
+# CALCULAR VALORES
+# ==========================================
+
+
+def calcular_valores():
+    conn = conectar()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            customer.customer_name,
+            customer_seam.name_seam,
+            customer_seam.valor,
+            request.amount,
+            customer_seam.valor * request.amount AS valor_total
+        FROM
+            request
+        INNER JOIN customer_seam ON request.customer_seam_id = customer_seam.id_customer_seam
+        INNER JOIN customer ON customer_seam.customer_id = customer.id_customer
+        ORDER BY customer.customer_name;
+    """)
+
+    valor_final = cur.fetchall()
+
+    for valor in valor_final:
+        print(
+            f"Cliente: {valor[0]} | "
+            f"Tipo de Costura: {valor[1]} | "
+            f"Valor por par: R$ {valor[2]:2f} | "
+            f"Pares: {valor[3]} | "
+            f"Total a pagar: R$ {valor[4]:2f}"
+            )
+
+    cur.close()
+    conn.close()
+
+calcular_valores()
